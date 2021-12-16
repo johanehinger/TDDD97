@@ -1,4 +1,12 @@
 displayview = function () {
+  token = sessionStorage.getItem("token");
+  console.log(token);
+
+  if (token) {
+    document.getElementById("view").innerHTML =
+      document.getElementById("profile-view").innerHTML;
+    return;
+  }
   document.getElementById("view").innerHTML =
     document.getElementById("welcome-view").innerHTML;
 };
@@ -7,18 +15,27 @@ window.onload = function () {
   displayview();
 };
 
-function loginValidation() {
+function signIn() {
   password = document.getElementById("password").value;
+  email = document.getElementById("username").value;
   if (password.length < 5) {
     document.getElementById("login-error").innerHTML =
       "Password must be longer than 5 characters!";
     return false;
   }
-  return true;
+  response = serverstub.signIn(email, password);
+  if (!response.success) {
+    document.getElementById("login-error").innerHTML = response.message;
+    return false;
+  }
+  sessionStorage.setItem("token", response.data);
+  displayview();
+  return response.success;
 }
 
 function signUp() {
   password = document.getElementById("password-sign-up").value;
+  email = document.getElementById("username-sign-up").value;
   repeat_password = document.getElementById("repeat-password-sign-up").value;
   if (password.length < 5 || repeat_password.length < 5) {
     document.getElementById("sign-up-error").innerHTML =
@@ -31,7 +48,7 @@ function signUp() {
     return false;
   }
   userData = {
-    email: document.getElementById("username-sign-up").value,
+    email: email,
     password: password,
     firstname: document.getElementById("first-name").value,
     familyname: document.getElementById("last-name").value,
@@ -45,5 +62,12 @@ function signUp() {
     document.getElementById("sign-up-error").innerHTML = response.message;
     return false;
   }
+  response = serverstub.signIn(email, password);
+  if (!response.success) {
+    document.getElementById("login-error").innerHTML = response.message;
+    return false;
+  }
+  sessionStorage.setItem("token", response.data);
+  displayview();
   return response.success;
 }
