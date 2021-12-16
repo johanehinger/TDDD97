@@ -9,59 +9,61 @@
           <div class="logo-and-slogan"></div>
           <div class="forms">
             <div class="login">
-              <form>
+              <form onsubmit="return loginValidation()">
                 <div class="form-group">
                   <label for="username">Email:</label>
-                  <input type="email" id="username" />
+                  <input type="email" id="username" required/>
                 </div>
                 <div class="form-group">
                   <label for="password">Password:</label>
-                  <input type="password" id="password" />
+                  <input type="password" id="password" required/>
                 </div>
                 <input type="submit" value="Login" />
+                <div id="login-error"></div>
               </form>
             </div>
             <div class="sign-up">
               <div class="title">
                 <h3>Sign up here</h3>
               </div>
-              <form>
+              <form onsubmit="return signUpValidation()">
                 <div class="form-group">
                   <label for="first-name">First name:</label>
-                  <input type="text" id="first-name" />
+                  <input type="text" id="first-name" required/>
                 </div>
                 <div class="form-group">
                   <label for="last-name">Last name:</label>
-                  <input type="text" id="last-name" />
+                  <input type="text" id="last-name" required/>
                 </div>
                 <div class="form-group">
                   <label for="gender-select">Gender:</label>
-                  <select name="gender" id="gender-select">
+                  <select name="gender" id="gender-select" required>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                   </select>
                 </div>
                 <div class="form-group">
                   <label for="city">City:</label>
-                  <input type="text" id="city" />
+                  <input type="text" id="city" required/>
                 </div>
                 <div class="form-group">
                   <label for="country">Country:</label>
-                  <input type="text" id="country" />
+                  <input type="text" id="country" required/>
                 </div>
                 <div class="form-group">
                   <label for="username-sign-up">Email:</label>
-                  <input type="email" id="username-sign-up" />
+                  <input type="email" id="username-sign-up" required/>
                 </div>
                 <div class="form-group">
                   <label for="password-sign-up">Password:</label>
-                  <input type="password" id="password-sign-up" />
+                  <input type="password" id="password-sign-up" required/>
                 </div>
                 <div class="form-group">
                   <label for="repeat-password-sign-up">Repeat PASW:</label>
-                  <input type="password" id="repeat-password-sign-up" />
+                  <input type="password" id="repeat-password-sign-up" required/>
                 </div>
                 <input type="submit" value="Sign up" />
+                <div id="sign-up-error"></div>
               </form>
             </div>
           </div>

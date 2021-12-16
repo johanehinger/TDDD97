@@ -62,6 +62,12 @@
   height: 290px;
 }
 
+#sign-up-error,
+#login-error {
+  color: red;
+  font-size: small;
+}
+
 .form-group {
   margin-top: 2px;
   width: 100%;
@@ -78,7 +84,7 @@ select {
 }
 
 input[type="submit"] {
-  margin-top: 10px;
+  margin-top: 2px;
   float: right;
   cursor: pointer;
 }
