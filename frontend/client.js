@@ -17,7 +17,7 @@ function loginValidation() {
   return true;
 }
 
-function signUpValidation() {
+function signUp() {
   password = document.getElementById("password-sign-up").value;
   repeat_password = document.getElementById("repeat-password-sign-up").value;
   if (password.length < 5 || repeat_password.length < 5) {
@@ -30,5 +30,20 @@ function signUpValidation() {
       "Passwords must match!";
     return false;
   }
-  return true;
+  userData = {
+    email: document.getElementById("username-sign-up").value,
+    password: password,
+    firstname: document.getElementById("first-name").value,
+    familyname: document.getElementById("last-name").value,
+    gender: document.getElementById("gender-select").value,
+    city: document.getElementById("city").value,
+    country: document.getElementById("country").value,
+  };
+  console.log(userData);
+  response = serverstub.signUp(userData);
+  if (!response.success) {
+    document.getElementById("sign-up-error").innerHTML = response.message;
+    return false;
+  }
+  return response.success;
 }
