@@ -4,6 +4,8 @@ displayview = function () {
   if (token) {
     document.getElementById("view").innerHTML =
       document.getElementById("profile-view").innerHTML;
+    getUserInfo();
+    getPosts();
     return;
   }
   document.getElementById("view").innerHTML =
@@ -115,4 +117,57 @@ function signOut() {
     sessionStorage.clear();
     displayview();
   }
+}
+
+function getUserInfo() {
+  token = sessionStorage.getItem("token");
+
+  response = serverstub.getUserDataByToken(token);
+  console.log(response.data);
+  document.getElementById("user-email").innerHTML =
+    "Email: " + response.data.email;
+  document.getElementById("first-name").innerHTML =
+    "First name: " + response.data.firstname;
+  document.getElementById("last-name").innerHTML =
+    "Last name: " + response.data.familyname;
+  document.getElementById("gender").innerHTML =
+    "Gender: " + response.data.gender;
+  document.getElementById("user-city").innerHTML =
+    "City: " + response.data.city;
+  document.getElementById("user-country").innerHTML =
+    "Country: " + response.data.country;
+}
+
+function post() {
+  token = sessionStorage.getItem("token");
+  response = serverstub.getUserDataByToken(token);
+  content = document.getElementById("new-post-text").value;
+  to_email = response.data.email;
+  response = serverstub.postMessage(token, content, to_email);
+  getPosts();
+  document.getElementById("new-post-text").value = "";
+}
+
+function getPosts() {
+  document.getElementById("post-list").innerHTML = "";
+  token = sessionStorage.getItem("token");
+
+  response = serverstub.getUserMessagesByToken(token);
+  posts = response.data;
+  list_container = document.createElement("div");
+  list_element = document.createElement("ul");
+  document.getElementsByClassName("post-list")[0].appendChild(list_container);
+  list_container.appendChild(list_element);
+
+  for (i = 0; i < posts.length; ++i) {
+    // create an item for each one
+    listItem = document.createElement("li");
+
+    // Add the item text
+    listItem.innerHTML = posts[i].content;
+
+    // Add listItem to the listElement
+    list_element.appendChild(listItem);
+  }
+  console.log(response);
 }
