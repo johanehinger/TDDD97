@@ -71,7 +71,23 @@
       </div>
     </script>
     <script id="profile-view" type="text/view">
-      <h1>Profile!</h1>
+      <div class="tab">
+        <button class="tablinks active" onclick="navigate(event, 'Home')">Home</button>
+        <button class="tablinks" onclick="navigate(event, 'Browse')">Browse</button>
+        <button class="tablinks" onclick="navigate(event, 'Account')">Account</button>
+      </div>
+
+      <div id="Home" class="tabcontent" style="display:block" >
+        <h3>Home</h3>
+      </div>
+
+      <div id="Browse" class="tabcontent">
+        <h3>Browse</h3>
+      </div>
+
+      <div id="Account" class="tabcontent">
+        <h3>Account</h3>
+      </div>
     </script>
   </head>
   <body>
