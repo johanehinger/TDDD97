@@ -123,7 +123,6 @@ function getUserInfo() {
   token = sessionStorage.getItem("token");
 
   response = serverstub.getUserDataByToken(token);
-  console.log(response.data);
   document.getElementById("user-email").innerHTML =
     "Email: " + response.data.email;
   document.getElementById("first-name").innerHTML =
@@ -160,14 +159,76 @@ function getPosts() {
   list_container.appendChild(list_element);
 
   for (i = 0; i < posts.length; ++i) {
-    // create an item for each one
-    listItem = document.createElement("li");
+    list_item = document.createElement("li");
+    list_item.innerHTML = posts[i].content;
 
-    // Add the item text
-    listItem.innerHTML = posts[i].content;
-
-    // Add listItem to the listElement
-    list_element.appendChild(listItem);
+    list_element.appendChild(list_item);
   }
+}
+
+function getOtherUserPosts() {
+  document.getElementById("search-post-list").innerHTML = "";
+
+  token = sessionStorage.getItem("token");
+  email = document.getElementById("search-username").value;
+  response = serverstub.getUserMessagesByEmail(token, email);
   console.log(response);
+  posts = response.data;
+
+  list_container = document.createElement("div");
+  list_element = document.createElement("ul");
+  document
+    .getElementsByClassName("search-post-list")[0]
+    .appendChild(list_container);
+  list_container.appendChild(list_element);
+
+  for (i = 0; i < posts.length; ++i) {
+    list_item = document.createElement("li");
+    list_item.innerHTML = posts[i].content;
+
+    list_element.appendChild(list_item);
+  }
+}
+
+function postOnOtherUser() {
+  token = sessionStorage.getItem("token");
+  content = document.getElementById("search-new-post-text").value;
+  to_email = document.getElementById("search-username").value;
+  if (!to_email || !content) {
+    return;
+  }
+  response = serverstub.postMessage(token, content, to_email);
+  console.log(response);
+  getOtherUserPosts();
+  document.getElementById("search-new-post-text").value = "";
+}
+
+function getOtherUserInfo() {
+  email = document.getElementById("search-username").value;
+  token = sessionStorage.getItem("token");
+
+  if (!email) {
+    return;
+  }
+  response = serverstub.getUserDataByEmail(token, email);
+  console.log(response);
+  if (!response.success) {
+    document.getElementById("search-error").innerHTML = response.message;
+    return;
+  }
+  document.getElementById("search-error").innerHTML = "";
+  document.getElementById("search-user-email").innerHTML =
+    "Email: " + response.data.email;
+  document.getElementById("search-first-name").innerHTML =
+    "First name: " + response.data.firstname;
+  document.getElementById("search-last-name").innerHTML =
+    "Last name: " + response.data.familyname;
+  document.getElementById("search-gender").innerHTML =
+    "Gender: " + response.data.gender;
+  document.getElementById("search-user-city").innerHTML =
+    "City: " + response.data.city;
+  document.getElementById("search-user-country").innerHTML =
+    "Country: " + response.data.country;
+  getOtherUserPosts();
+  console.log(email);
 }

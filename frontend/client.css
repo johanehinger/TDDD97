@@ -63,6 +63,7 @@
   height: 290px;
 }
 
+#search-error,
 #change-password-error,
 #sign-up-error,
 #login-error {
@@ -175,4 +176,20 @@ input[type="submit"] {
   border-width: 1px;
   padding: 3px;
   background-color: whitesmoke;
+}
+
+.search {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+  -moz-box-sizing: border-box; /* Firefox, other Gecko */
+  box-sizing: border-box; /* Opera/IE 8+ */
+  border-style: solid;
+  border-color: grey;
+  border-width: 1px;
+  padding: 3px;
+  background-color: whitesmoke;
+  width: 250px;
+  height: 75px;
 }

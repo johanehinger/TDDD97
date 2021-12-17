@@ -104,6 +104,35 @@
 
       <div id="Browse" class="tabcontent">
         <h3>Browse</h3>
+        <div class="search">
+          <div class="form-group">
+            <label for="search-username">Search: </label>
+            <input type="email" id="search-username" required/>
+          </div>
+          <button onclick="getOtherUserInfo()" />Search</button>
+          <div id="search-error"></div>
+        </div>
+        <div class="container">
+          <div class="container">
+            <div class="user-info">
+              <h2>User info</h2>
+              <p id="search-user-email"></p>
+              <p id="search-first-name"></p>
+              <p id="search-last-name"></p>
+              <p id="search-gender"></p>
+              <p id="search-user-city"></p>
+              <p id="search-user-country"></p>
+            </div>
+            <div class="new-post">
+              <textarea class="post-text" rows="4" cols="50" id="search-new-post-text"></textarea>
+              <button type="button" class="post-button" onclick="postOnOtherUser()">Post</button>
+            </div>
+            <div class="all-posts">
+              <div class="search-post-list" id="search-post-list"></div>
+              <button type="button" class="refresh-posts-button" onclick="getOtherUserPosts()">Refresh</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="Account" class="tabcontent">
