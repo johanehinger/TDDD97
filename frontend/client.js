@@ -1,6 +1,5 @@
 displayview = function () {
   token = sessionStorage.getItem("token");
-  console.log(token);
 
   if (token) {
     document.getElementById("view").innerHTML =
@@ -84,4 +83,36 @@ function navigate(evt, tab) {
   }
   document.getElementById(tab).style.display = "block";
   evt.currentTarget.className += " active";
+}
+
+function changePassword() {
+  old_password = document.getElementById("old-password").value;
+  new_password = document.getElementById("new-password").value;
+  repeat_new_password = document.getElementById("repeat-new-password").value;
+
+  if (new_password != repeat_new_password) {
+    document.getElementById("change-password-error").innerHTML =
+      "Passwords must match!";
+    return false;
+  }
+  if (new_password.length < 5 || repeat_new_password.length < 5) {
+    document.getElementById("change-password-error").innerHTML =
+      "Password must be longer than 5 characters!";
+    return false;
+  }
+  token = sessionStorage.getItem("token");
+
+  response = serverstub.changePassword(token, old_password, new_password);
+
+  document.getElementById("change-password-error").innerHTML = response.message;
+  return false;
+}
+
+function signOut() {
+  token = sessionStorage.getItem("token");
+  response = serverstub.signOut(token);
+  if (response.success) {
+    sessionStorage.clear();
+    displayview();
+  }
 }
