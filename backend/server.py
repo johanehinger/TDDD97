@@ -203,6 +203,31 @@ def get_user_messages_by_token():
     return {"success": True, "message": "User messages retrieved.", "data": match};
 
 
+@app.route("/get_user_messages_by_email", methods=["POST"])
+def get_user_messages_by_email():
+    """
+    Retrieves the stored messages for the user specified by the passed email address.
+    """
+    token = request.headers.get("token")
+    email = request.headers.get("email")
+
+    if (not database_helper.query_db("SELECT * from loggedinusers WHERE token=?", [token], one=True)):
+        return {"success": False, "message": "You are not signed in."}
+    
+    if (not database_helper.query_db("SELECT * from users WHERE email=?", [email], one=True)):
+        return {"success": False, "message": "No such user."}
+
+    data = database_helper.query_db("select * from messages WHERE writer=?", [email])
+
+    match = []
+    for message in data:
+        match.append({
+        "writer": message[0],
+        "content": message[1],
+    })
+    return {"success": True, "message": "User messages retrieved.", "data": match};
+
+
 @app.route("/print", methods=['GET'])
 def test():
     """
