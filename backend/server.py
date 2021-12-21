@@ -80,6 +80,25 @@ def sign_out():
     return {"success": True, "message": "Successfully signed out."}
 
 
+@app.route("/change_password", methods=["POST"])
+def change_password():
+    """
+    Changes the password of the current user to a new one.
+    """
+    token = request.headers.get("token")
+    oldPassword = request.headers.get("oldpassword")
+    newPassword = request.headers.get("newpassword")
+    email = database_helper.query_db("SELECT email from loggedinusers WHERE token=?", [token], one=True)
+
+    if (not email):
+        return {"success": False, "message": "You are not logged in."} 
+
+    if (not database_helper.query_db("select * from users WHERE password=? and email=?", [oldPassword, email[0]], one=True)):
+        return {"success": False, "message": "Wrong password."}
+
+    database_helper.query_db("UPDATE users SET password=? WHERE email=?", [newPassword, email[0]])
+    return {"success": True, "message": "Password changed."}
+
 
 @app.route("/print", methods=['GET'])
 def test():
