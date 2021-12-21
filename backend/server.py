@@ -66,6 +66,21 @@ def sign_up():
     database_helper.query_db("INSERT INTO users(email, city, country, familyname, firstname, gender, password) VALUES(?, ?, ?, ?, ?, ?, ?)", [email, city, country, familyName, firstName, gender, password])
     return {"success": True, "message": "Successfully created a new user."};
 
+
+@app.route("/sign_out", methods=["POST"])
+def sign_out():
+    """
+    Signs out a user from the system.
+    """
+    token = request.headers.get("token")
+    if (not database_helper.query_db("select * from loggedinusers WHERE token=?", [token], one=True)):
+        return {"success": False, "message": "You are not signed in."}
+    
+    database_helper.query_db("DELETE FROM loggedinusers WHERE token=?", [token])
+    return {"success": True, "message": "Successfully signed out."}
+
+
+
 @app.route("/print", methods=['GET'])
 def test():
     for user in database_helper.query_db("select * from users"):
