@@ -138,7 +138,7 @@ def get_user_data_by_email():
     token = request.headers.get("token")
     email = request.headers.get("email")
 
-    if (database_helper.query_db("SELECT * from loggedinusers WHERE token=?", [token], one=True)):
+    if (not database_helper.query_db("SELECT * from loggedinusers WHERE token=?", [token], one=True)):
         return {"success": False, "message": "You are not signed in."}
 
     user = database_helper.query_db("SELECT * from users WHERE email=?", [email], one=True)
@@ -158,14 +158,38 @@ def get_user_data_by_email():
 
     return {"success": True, "message": "User data retrieved.", "data": match};
 
+@app.route("/post_message", methods=["POST"])
+def post_message():
+    """
+    Tries to post a message to the wall of the user specified by the email address.
+    """
+    token = request.headers.get("token")
+    message = request.headers.get("message")
+    email = request.headers.get("email")
+    
+    if (not database_helper.query_db("SELECT * from users WHERE email=?", [email], one=True)):
+        return {"success": False, "message": "No such user."}
+
+    if (not database_helper.query_db("SELECT * from loggedinusers WHERE token=?", [token], one=True)):
+        return {"success": False, "message": "You are not signed in."}
+
+    database_helper.query_db("INSERT INTO messages(writer, content) VALUES(?, ?)", [email, message])
+    return {"success": True, "message": "Message posted"}
+
 
 @app.route("/print", methods=['GET'])
 def test():
+    """
+    Only for debug.
+    """
     for user in database_helper.query_db("select * from users"):
         print("User: ", user)
 
     for loggedinuser in database_helper.query_db("select * from loggedinusers"):
         print("Logged in user: ", loggedinuser)
+    
+    for message in database_helper.query_db("select * from messages"):
+        print("Message: ", message)
 
     return {"success": True, "message": "Print done"}
 
