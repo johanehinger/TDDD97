@@ -25,13 +25,25 @@ def init_database():
 
 @app.route("/sign_in", methods=['POST'])
 def sign_in():
+    """
+    Authenticates the username by the provided password.
+    """
     email = request.headers.get("email")
     password = request.headers.get("password")
+
+    # Assert that the user does exist and that the password is correct!
+    if (not database_helper.query_db("select * from users WHERE email=? AND password=?", [email, password], one=True)):
+        return {"success": False, "message": "Wrong username or password."};
+    
     token = generateToken()
+    database_helper.query_db("INSERT INTO loggedinusers(token, email) VALUES(?, ?)", [token, email])
     return {"success": True, "message": "Successfully signed in.", "data": token }
 
 @app.route("/sign_up", methods=["POST"])
 def sign_up():
+    """
+    Registers a user in the database.
+    """
     firstName = request.headers.get("firstname")
     familyName = request.headers.get("familyname")
     gender = request.headers.get("gender")
@@ -48,7 +60,7 @@ def sign_up():
         return {"success": False, "message": "User already exists."}
 
     # Data must be valid
-    if (not (firstName and familyName and gender and city and country) or (len(password)>=5) or not ('@' in email)):
+    if (not (firstName and familyName and gender and city and country) or (len(password)<5) or not ('@' in email)):
         return {"success": False, "message": "Form data missing or incorrect type."};
 
     database_helper.query_db("INSERT INTO users(email, city, country, familyname, firstname, gender, password) VALUES(?, ?, ?, ?, ?, ?, ?)", [email, city, country, familyName, firstName, gender, password])
@@ -57,7 +69,10 @@ def sign_up():
 @app.route("/print", methods=['GET'])
 def test():
     for user in database_helper.query_db("select * from users"):
-        print(user)
+        print("User: ", user)
+
+    for loggedinuser in database_helper.query_db("select * from loggedinusers"):
+        print("Logged in user: ", loggedinuser)
 
     return {"success": True, "message": "Print done"}
 
