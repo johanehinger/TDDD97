@@ -126,7 +126,36 @@ def get_user_data_by_token():
         "firstname": data[4],
         "gender": data[5]
     }
-    print(data)
+
+    return {"success": True, "message": "User data retrieved.", "data": match};
+
+
+@app.route("/get_user_data_by_email", methods=["POST"])
+def get_user_data_by_email():
+    """
+    Retrieves the stored data for the user specified by the passed email address.
+    """
+    token = request.headers.get("token")
+    email = request.headers.get("email")
+
+    if (database_helper.query_db("SELECT * from loggedinusers WHERE token=?", [token], one=True)):
+        return {"success": False, "message": "You are not signed in."}
+
+    user = database_helper.query_db("SELECT * from users WHERE email=?", [email], one=True)
+    print(user)
+    if (not user):
+        return {"success": False, "message": "No such user."}   
+
+    data = database_helper.query_db("select * from users WHERE email=?", [email], one=True)
+    match = {
+        "email": data[0],
+        "city": data[1],
+        "country": data[2],
+        "familyname": data[3],
+        "firstname": data[4],
+        "gender": data[5]
+    }
+
     return {"success": True, "message": "User data retrieved.", "data": match};
 
 
