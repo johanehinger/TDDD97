@@ -100,6 +100,36 @@ def change_password():
     return {"success": True, "message": "Password changed."}
 
 
+@app.route("/get_user_data_by_token", methods=["POST"])
+def get_user_data_by_token():
+    """
+    Retrieves the stored data for the user whom the passed token is issued for. The currently
+    signed in user can use this method to retrieve all its own information from the server
+    """
+    token = request.headers.get("token")
+    email = database_helper.query_db("SELECT email from loggedinusers WHERE token=?", [token], one=True)
+
+    if (not email):
+        return {"success": False, "message": "You are not signed in."}
+
+    user = database_helper.query_db("SELECT email from users WHERE email=?", [email[0]], one=True)
+
+    if (not user):
+        return {"success": False, "message": "No such user."}   
+
+    data = database_helper.query_db("select * from users WHERE email=?", [email[0]], one=True)
+    match = {
+        "email": data[0],
+        "city": data[1],
+        "country": data[2],
+        "familyname": data[3],
+        "firstname": data[4],
+        "gender": data[5]
+    }
+    print(data)
+    return {"success": True, "message": "User data retrieved.", "data": match};
+
+
 @app.route("/print", methods=['GET'])
 def test():
     for user in database_helper.query_db("select * from users"):
