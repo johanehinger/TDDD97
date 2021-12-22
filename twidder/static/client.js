@@ -1,5 +1,3 @@
-var xhttp = new XMLHttpRequest();
-
 displayview = function () {
   token = sessionStorage.getItem("token");
 
@@ -26,6 +24,7 @@ function signIn() {
       "Password must be longer than 5 characters!";
     return false;
   }
+  const xhttp = new XMLHttpRequest();
   xhttp.open("POST", "/sign_in", true);
   xhttp.setRequestHeader("email", email);
   xhttp.setRequestHeader("password", password);
@@ -131,20 +130,27 @@ function signOut() {
 
 function getUserInfo() {
   token = sessionStorage.getItem("token");
-
-  response = serverstub.getUserDataByToken(token);
-  document.getElementById("user-email").innerHTML =
-    "Email: " + response.data.email;
-  document.getElementById("first-name").innerHTML =
-    "First name: " + response.data.firstname;
-  document.getElementById("last-name").innerHTML =
-    "Last name: " + response.data.familyname;
-  document.getElementById("gender").innerHTML =
-    "Gender: " + response.data.gender;
-  document.getElementById("user-city").innerHTML =
-    "City: " + response.data.city;
-  document.getElementById("user-country").innerHTML =
-    "Country: " + response.data.country;
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/get_user_data_by_token", true);
+  xhttp.setRequestHeader("token", token);
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      document.getElementById("user-email").innerHTML =
+        "Email: " + response.data.email;
+      document.getElementById("first-name").innerHTML =
+        "First name: " + response.data.firstname;
+      document.getElementById("last-name").innerHTML =
+        "Last name: " + response.data.familyname;
+      document.getElementById("gender").innerHTML =
+        "Gender: " + response.data.gender;
+      document.getElementById("user-city").innerHTML =
+        "City: " + response.data.city;
+      document.getElementById("user-country").innerHTML =
+        "Country: " + response.data.country;
+    }
+  };
+  xhttp.send();
 }
 
 function post() {
@@ -161,19 +167,29 @@ function getPosts() {
   document.getElementById("post-list").innerHTML = "";
   token = sessionStorage.getItem("token");
 
-  response = serverstub.getUserMessagesByToken(token);
-  posts = response.data;
-  list_container = document.createElement("div");
-  list_element = document.createElement("ul");
-  document.getElementsByClassName("post-list")[0].appendChild(list_container);
-  list_container.appendChild(list_element);
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/get_user_messages_by_token", true);
+  xhttp.setRequestHeader("token", token);
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      posts = response.data;
+      list_container = document.createElement("div");
+      list_element = document.createElement("ul");
+      document
+        .getElementsByClassName("post-list")[0]
+        .appendChild(list_container);
+      list_container.appendChild(list_element);
 
-  for (i = 0; i < posts.length; ++i) {
-    list_item = document.createElement("li");
-    list_item.innerHTML = posts[i].content;
+      for (i = 0; i < posts.length; ++i) {
+        list_item = document.createElement("li");
+        list_item.innerHTML = posts[i].content;
 
-    list_element.appendChild(list_item);
-  }
+        list_element.appendChild(list_item);
+      }
+    }
+  };
+  xhttp.send();
 }
 
 function getOtherUserPosts() {

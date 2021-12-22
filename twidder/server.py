@@ -127,7 +127,7 @@ def get_user_data_by_token():
         "gender": data[5]
     }
 
-    return {"success": True, "message": "User data retrieved.", "data": match};
+    return {"success": True, "message": "User data retrieved.", "data": match}
 
 
 @app.route("/get_user_data_by_email", methods=["POST"])
