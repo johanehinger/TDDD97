@@ -1,3 +1,5 @@
+var xhttp = new XMLHttpRequest();
+
 displayview = function () {
   token = sessionStorage.getItem("token");
 
@@ -24,14 +26,22 @@ function signIn() {
       "Password must be longer than 5 characters!";
     return false;
   }
-  response = serverstub.signIn(email, password);
-  if (!response.success) {
-    document.getElementById("login-error").innerHTML = response.message;
-    return false;
-  }
-  sessionStorage.setItem("token", response.data);
-  displayview();
-  return response.success;
+  xhttp.open("POST", "/sign_in", true);
+  xhttp.setRequestHeader("email", email);
+  xhttp.setRequestHeader("password", password);
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      if (!response.success) {
+        document.getElementById("login-error").innerHTML = response.message;
+        return false;
+      }
+      sessionStorage.setItem("token", response.data);
+      displayview();
+      return response.success;
+    }
+  };
+  xhttp.send();
 }
 
 function signUp() {
