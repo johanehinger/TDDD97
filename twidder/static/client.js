@@ -175,7 +175,6 @@ function getUserInfo() {
 
 function post() {
   token = sessionStorage.getItem("token");
-  // response = serverstub.getUserDataByToken(token);
   message = document.getElementById("new-post-text").value;
   const xhttp = new XMLHttpRequest();
   xhttp.open("POST", "/get_user_data_by_token", true);
@@ -202,10 +201,6 @@ function post() {
     }
   };
   xhttp.send();
-  // to_email = response.data.email;
-  // response = serverstub.postMessage(token, content, to_email);
-  // getPosts();
-  // document.getElementById("new-post-text").value = "";
 }
 
 function getPosts() {
@@ -242,23 +237,33 @@ function getOtherUserPosts() {
 
   token = sessionStorage.getItem("token");
   email = document.getElementById("search-username").value;
-  response = serverstub.getUserMessagesByEmail(token, email);
-  console.log(response);
-  posts = response.data;
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/get_user_messages_by_email", true);
+  xhttp.setRequestHeader("token", token);
+  xhttp.setRequestHeader("email", email);
 
-  list_container = document.createElement("div");
-  list_element = document.createElement("ul");
-  document
-    .getElementsByClassName("search-post-list")[0]
-    .appendChild(list_container);
-  list_container.appendChild(list_element);
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      console.log(response);
+      posts = response.data;
 
-  for (i = 0; i < posts.length; ++i) {
-    list_item = document.createElement("li");
-    list_item.innerHTML = posts[i].content;
+      list_container = document.createElement("div");
+      list_element = document.createElement("ul");
+      document
+        .getElementsByClassName("search-post-list")[0]
+        .appendChild(list_container);
+      list_container.appendChild(list_element);
 
-    list_element.appendChild(list_item);
-  }
+      for (i = 0; i < posts.length; ++i) {
+        list_item = document.createElement("li");
+        list_item.innerHTML = posts[i].content;
+
+        list_element.appendChild(list_item);
+      }
+    }
+  };
+  xhttp.send();
 }
 
 function postOnOtherUser() {
@@ -268,10 +273,22 @@ function postOnOtherUser() {
   if (!to_email || !content) {
     return;
   }
-  response = serverstub.postMessage(token, content, to_email);
-  console.log(response);
-  getOtherUserPosts();
-  document.getElementById("search-new-post-text").value = "";
+  // response = serverstub.postMessage(token, content, to_email);
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/post_message", true);
+  xhttp.setRequestHeader("token", token);
+  xhttp.setRequestHeader("message", content);
+  xhttp.setRequestHeader("email", to_email);
+
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      console.log(response);
+      getOtherUserPosts();
+      document.getElementById("search-new-post-text").value = "";
+    }
+  };
+  xhttp.send();
 }
 
 function getOtherUserInfo() {
@@ -281,25 +298,35 @@ function getOtherUserInfo() {
   if (!email) {
     return;
   }
-  response = serverstub.getUserDataByEmail(token, email);
-  console.log(response);
-  if (!response.success) {
-    document.getElementById("search-error").innerHTML = response.message;
-    return;
-  }
-  document.getElementById("search-error").innerHTML = "";
-  document.getElementById("search-user-email").innerHTML =
-    "Email: " + response.data.email;
-  document.getElementById("search-first-name").innerHTML =
-    "First name: " + response.data.firstname;
-  document.getElementById("search-last-name").innerHTML =
-    "Last name: " + response.data.familyname;
-  document.getElementById("search-gender").innerHTML =
-    "Gender: " + response.data.gender;
-  document.getElementById("search-user-city").innerHTML =
-    "City: " + response.data.city;
-  document.getElementById("search-user-country").innerHTML =
-    "Country: " + response.data.country;
-  getOtherUserPosts();
-  console.log(email);
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/get_user_data_by_email", true);
+  xhttp.setRequestHeader("token", token);
+  xhttp.setRequestHeader("email", email);
+
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      console.log(response);
+      if (!response.success) {
+        document.getElementById("search-error").innerHTML = response.message;
+        return;
+      }
+      document.getElementById("search-error").innerHTML = "";
+      document.getElementById("search-user-email").innerHTML =
+        "Email: " + response.data.email;
+      document.getElementById("search-first-name").innerHTML =
+        "First name: " + response.data.firstname;
+      document.getElementById("search-last-name").innerHTML =
+        "Last name: " + response.data.familyname;
+      document.getElementById("search-gender").innerHTML =
+        "Gender: " + response.data.gender;
+      document.getElementById("search-user-city").innerHTML =
+        "City: " + response.data.city;
+      document.getElementById("search-user-country").innerHTML =
+        "Country: " + response.data.country;
+      getOtherUserPosts();
+      console.log(email);
+    }
+  };
+  xhttp.send();
 }
