@@ -47,6 +47,12 @@ function signUp() {
   password = document.getElementById("password-sign-up").value;
   email = document.getElementById("username-sign-up").value;
   repeat_password = document.getElementById("repeat-password-sign-up").value;
+  firstname = document.getElementById("first-name").value;
+  familyname = document.getElementById("last-name").value;
+  gender = document.getElementById("gender-select").value;
+  city = document.getElementById("city").value;
+  country = document.getElementById("country").value;
+
   if (password.length < 5 || repeat_password.length < 5) {
     document.getElementById("sign-up-error").innerHTML =
       "Password must be longer than 5 characters!";
@@ -57,29 +63,43 @@ function signUp() {
       "Passwords must match!";
     return false;
   }
-  userData = {
-    email: email,
-    password: password,
-    firstname: document.getElementById("first-name").value,
-    familyname: document.getElementById("last-name").value,
-    gender: document.getElementById("gender-select").value,
-    city: document.getElementById("city").value,
-    country: document.getElementById("country").value,
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/sign_up", true);
+  xhttp.setRequestHeader("email", email);
+  xhttp.setRequestHeader("password", password);
+  xhttp.setRequestHeader("firstname", firstname);
+  xhttp.setRequestHeader("familyname", familyname);
+  xhttp.setRequestHeader("gender", gender);
+  xhttp.setRequestHeader("city", city);
+  xhttp.setRequestHeader("country", country);
+
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(this.responseText);
+      if (!response.success) {
+        document.getElementById("sign-up-error").innerHTML = response.message;
+        return false;
+      }
+      const xhttp = new XMLHttpRequest();
+      xhttp.open("POST", "/sign_in", true);
+      xhttp.setRequestHeader("email", email);
+      xhttp.setRequestHeader("password", password);
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          response = JSON.parse(xhttp.responseText);
+          if (!response.success) {
+            document.getElementById("login-error").innerHTML = response.message;
+            return false;
+          }
+          sessionStorage.setItem("token", response.data);
+          displayview();
+          return response.success;
+        }
+      };
+      xhttp.send();
+    }
   };
-  console.log(userData);
-  response = serverstub.signUp(userData);
-  if (!response.success) {
-    document.getElementById("sign-up-error").innerHTML = response.message;
-    return false;
-  }
-  response = serverstub.signIn(email, password);
-  if (!response.success) {
-    document.getElementById("login-error").innerHTML = response.message;
-    return false;
-  }
-  sessionStorage.setItem("token", response.data);
-  displayview();
-  return response.success;
+  xhttp.send();
 }
 
 function navigate(evt, tab) {
@@ -155,12 +175,37 @@ function getUserInfo() {
 
 function post() {
   token = sessionStorage.getItem("token");
-  response = serverstub.getUserDataByToken(token);
-  content = document.getElementById("new-post-text").value;
-  to_email = response.data.email;
-  response = serverstub.postMessage(token, content, to_email);
-  getPosts();
-  document.getElementById("new-post-text").value = "";
+  // response = serverstub.getUserDataByToken(token);
+  message = document.getElementById("new-post-text").value;
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/get_user_data_by_token", true);
+  xhttp.setRequestHeader("token", token);
+
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(this.responseText);
+      email = response.data.email;
+      const xhttp = new XMLHttpRequest();
+      xhttp.open("POST", "/post_message", true);
+      xhttp.setRequestHeader("token", token);
+      xhttp.setRequestHeader("message", message);
+      xhttp.setRequestHeader("email", email);
+
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          response = JSON.parse(xhttp.responseText);
+          getPosts();
+          document.getElementById("new-post-text").value = "";
+        }
+      };
+      xhttp.send();
+    }
+  };
+  xhttp.send();
+  // to_email = response.data.email;
+  // response = serverstub.postMessage(token, content, to_email);
+  // getPosts();
+  // document.getElementById("new-post-text").value = "";
 }
 
 function getPosts() {
