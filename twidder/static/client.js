@@ -141,11 +141,19 @@ function changePassword() {
 
 function signOut() {
   token = sessionStorage.getItem("token");
-  response = serverstub.signOut(token);
-  if (response.success) {
-    sessionStorage.clear();
-    displayview();
-  }
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/sign_out", true);
+  xhttp.setRequestHeader("token", token);
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      if (response.success) {
+        sessionStorage.clear();
+        displayview();
+      }
+    }
+  };
+  xhttp.send();
 }
 
 function getUserInfo() {
@@ -273,7 +281,6 @@ function postOnOtherUser() {
   if (!to_email || !content) {
     return;
   }
-  // response = serverstub.postMessage(token, content, to_email);
   const xhttp = new XMLHttpRequest();
   xhttp.open("POST", "/post_message", true);
   xhttp.setRequestHeader("token", token);
