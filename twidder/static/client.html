@@ -139,7 +139,7 @@
         <div class="container">
           <div class="container">
             <div class="manage-account">
-              <form onsubmit="return changePassword()">
+              <form onsubmit="event.preventDefault(); changePassword()">
                 <div class="form-group">
                   <label for="old-password">Old password:</label>
                   <input type="password" id="old-password" required/>

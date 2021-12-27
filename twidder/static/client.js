@@ -124,19 +124,31 @@ function changePassword() {
   if (new_password != repeat_new_password) {
     document.getElementById("change-password-error").innerHTML =
       "Passwords must match!";
-    return false;
+    return;
   }
   if (new_password.length < 5 || repeat_new_password.length < 5) {
     document.getElementById("change-password-error").innerHTML =
       "Password must be longer than 5 characters!";
-    return false;
+    return;
   }
   token = sessionStorage.getItem("token");
 
-  response = serverstub.changePassword(token, old_password, new_password);
+  // response = serverstub.changePassword(token, old_password, new_password);
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/change_password", true);
+  xhttp.setRequestHeader("token", token);
+  xhttp.setRequestHeader("oldpassword", old_password);
+  xhttp.setRequestHeader("newpassword", new_password);
 
-  document.getElementById("change-password-error").innerHTML = response.message;
-  return false;
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      document.getElementById("change-password-error").innerHTML =
+        response.message;
+      return;
+    }
+  };
+  xhttp.send();
 }
 
 function signOut() {
