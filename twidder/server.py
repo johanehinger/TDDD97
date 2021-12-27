@@ -1,4 +1,4 @@
-from flask import Flask, request, current_app
+from flask import Flask, request
 import database_helper
 import math
 import random

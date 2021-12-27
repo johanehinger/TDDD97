@@ -7,3 +7,7 @@
 To initialize the database run:
 
 > flask initDatabase
+
+# Start the server using runserver.py
+
+> python .\runserver.py
