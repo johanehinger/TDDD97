@@ -37,6 +37,13 @@ function signIn() {
       }
       sessionStorage.setItem("token", response.data);
       displayview();
+
+      ws = new WebSocket("ws://" + document.domain + ":5000/api");
+
+      ws.onopen = function () {
+        ws.send("Open");
+        console.log("Open");
+      };
       return response.success;
     }
   };
@@ -133,7 +140,6 @@ function changePassword() {
   }
   token = sessionStorage.getItem("token");
 
-  // response = serverstub.changePassword(token, old_password, new_password);
   const xhttp = new XMLHttpRequest();
   xhttp.open("POST", "/change_password", true);
   xhttp.setRequestHeader("token", token);

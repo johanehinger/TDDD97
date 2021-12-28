@@ -1,3 +1,6 @@
+from gevent.pywsgi import WSGIServer
+from geventwebsocket.handler import WebSocketHandler
+from geventwebsocket import WebSocketServer
 from flask import Flask, request
 import database_helper
 import math
@@ -18,10 +21,26 @@ def hello_world():
     return app.send_static_file('client.html')
 
 # To start the database 
+# WARNING! Must be started with python -m in order to "see" gevent
+# python -m flask initDatabase
 @app.cli.command('initDatabase')
 def init_database():
     print("Init DB")
     database_helper.init_db(app)
+
+@app.route('/api')
+def api():
+    print("The Api")
+    ws = request.environ.get('wsgi.websocket')
+    print("Ws is: ", ws)
+    if request.environ.get('wsgi.websocket'):
+        ws = request.environ['wsgi.websocket']
+        print("Websocet request?")
+        while True:
+            # message = ws.receive()
+            message = " helo"
+            ws.send(message)
+    return ''
 
 @app.route("/sign_in", methods=['POST'])
 def sign_in():
@@ -244,5 +263,6 @@ def test():
 
     return {"success": True, "message": "Print done"}
 
-
-    
+if __name__ == '__main__':
+    http_server = WSGIServer(('127.0.0.1',5000), app, handler_class=WebSocketHandler)
+    http_server.serve_forever()
