@@ -8,6 +8,6 @@ To initialize the database run:
 
 > flask initDatabase
 
-# Start the server using runserver.py
+# Start the server with websockets
 
-> python .\runserver.py
+> python .\server.py

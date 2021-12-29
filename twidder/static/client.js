@@ -19,35 +19,37 @@ window.onload = function () {
 function signIn() {
   password = document.getElementById("password").value;
   email = document.getElementById("username").value;
+  token = sessionStorage.getItem("token");
+
   if (password.length < 5) {
     document.getElementById("login-error").innerHTML =
       "Password must be longer than 5 characters!";
     return false;
   }
-  const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/sign_in", true);
-  xhttp.setRequestHeader("email", email);
-  xhttp.setRequestHeader("password", password);
-  xhttp.onreadystatechange = function () {
-    if (this.readyState == 4 && this.status == 200) {
-      response = JSON.parse(xhttp.responseText);
-      if (!response.success) {
-        document.getElementById("login-error").innerHTML = response.message;
-        return false;
-      }
-      sessionStorage.setItem("token", response.data);
-      displayview();
+  socket = io();
 
-      ws = new WebSocket("ws://" + document.domain + ":5000/api");
+  socket.on("connect", function () {
+    socket.emit("login", email, password);
+  });
 
-      ws.onopen = function () {
-        ws.send("Open");
-        console.log("Open");
-      };
-      return response.success;
+  socket.on(email, (response) => {
+    if (!response.success) {
+      document.getElementById("login-error").innerHTML = response.message;
+      return false;
     }
-  };
-  xhttp.send();
+    console.log("email: " + email);
+    console.log("email response: " + response.email);
+
+    if (token && token != response.data) {
+      console.log("Token updated");
+      signOut();
+      return;
+    }
+
+    sessionStorage.setItem("token", response.data);
+    displayview();
+    console.log(response);
+  });
 }
 
 function signUp() {
@@ -87,23 +89,31 @@ function signUp() {
         document.getElementById("sign-up-error").innerHTML = response.message;
         return false;
       }
-      const xhttp = new XMLHttpRequest();
-      xhttp.open("POST", "/sign_in", true);
-      xhttp.setRequestHeader("email", email);
-      xhttp.setRequestHeader("password", password);
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-          response = JSON.parse(xhttp.responseText);
-          if (!response.success) {
-            document.getElementById("login-error").innerHTML = response.message;
-            return false;
-          }
-          sessionStorage.setItem("token", response.data);
-          displayview();
-          return response.success;
+
+      socket = io();
+
+      socket.on("connect", function () {
+        socket.emit("login", email, password);
+      });
+
+      socket.on(email, (response) => {
+        if (!response.success) {
+          document.getElementById("login-error").innerHTML = response.message;
+          return false;
         }
-      };
-      xhttp.send();
+        console.log("email: " + email);
+        console.log("email response: " + response.email);
+
+        if (token && token != response.data) {
+          console.log("Token updated");
+          signOut();
+          return;
+        }
+
+        sessionStorage.setItem("token", response.data);
+        displayview();
+        console.log(response);
+      });
     }
   };
   xhttp.send();
