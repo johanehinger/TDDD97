@@ -2,6 +2,9 @@ from flask import Flask, request
 import database_helper
 import math
 import random
+# TODO: JSON instead of headers.
+# TODO: token as auth in postman
+# TODO: create helper functions for all queries.
 
 app = Flask(__name__)
 
@@ -28,15 +31,16 @@ def sign_in():
     """
     Authenticates the username by the provided password.
     """
-    email = request.headers.get("email")
-    password = request.headers.get("password")
+    email = request.json.get("email")
+    password = request.json.get("password")
 
     # Assert that the user does exist and that the password is correct!
-    if (not database_helper.query_db("select * from users WHERE email=? AND password=?", [email, password], one=True)):
+    if (not database_helper.get_specific_user(email, password)):
         return {"success": False, "message": "Wrong username or password."};
     
     token = generateToken()
-    database_helper.query_db("INSERT INTO loggedinusers(token, email) VALUES(?, ?)", [token, email])
+    # database_helper.query_db("INSERT INTO loggedinusers(token, email) VALUES(?, ?)", [token, email])
+    database_helper.add_user(token, email)
     return {"success": True, "message": "Successfully signed in.", "data": token }
 
 @app.route("/sign_up", methods=["POST"])
@@ -44,26 +48,25 @@ def sign_up():
     """
     Registers a user in the database.
     """
-    firstName = request.headers.get("firstname")
-    familyName = request.headers.get("familyname")
-    gender = request.headers.get("gender")
-    city = request.headers.get("city")
-    country = request.headers.get("country")
-    email = request.headers.get("email")
-    password = request.headers.get("password")
+    firstName = request.json.get("firstname")
+    familyName = request.json.get("familyname")
+    gender = request.json.get("gender")
+    city = request.json.get("city")
+    country = request.json.get("country")
+    email = request.json.get("email")
+    password = request.json.get("password")
     print(firstName)
     print(not (firstName and familyName and gender and city and country))
     print(not ('@' in email))
     
     # Assert that the user doesn't exist.
-    if (database_helper.query_db("select * from users WHERE email=?", [email], one=True) != None):
+    if (database_helper.select_user_by_email(email) != None):
         return {"success": False, "message": "User already exists."}
 
     # Data must be valid
     if (not (firstName and familyName and gender and city and country) or (len(password)<5) or not ('@' in email)):
         return {"success": False, "message": "Form data missing or incorrect type."};
-
-    database_helper.query_db("INSERT INTO users(email, city, country, familyname, firstname, gender, password) VALUES(?, ?, ?, ?, ?, ?, ?)", [email, city, country, familyName, firstName, gender, password])
+    database_helper.create_user(email, city, country, familyName, firstName, gender, password)
     return {"success": True, "message": "Successfully created a new user."};
 
 
@@ -72,11 +75,12 @@ def sign_out():
     """
     Signs out a user from the system.
     """
-    token = request.headers.get("token")
-    if (not database_helper.query_db("select * from loggedinusers WHERE token=?", [token], one=True)):
+    token = request.headers.get("Authorization").split()[1]
+    
+    if (not database_helper.select_user_by_token(token)):
         return {"success": False, "message": "You are not signed in."}
     
-    database_helper.query_db("DELETE FROM loggedinusers WHERE token=?", [token])
+    database_helper.remove_user(token)
     return {"success": True, "message": "Successfully signed out."}
 
 
@@ -85,18 +89,18 @@ def change_password():
     """
     Changes the password of the current user to a new one.
     """
-    token = request.headers.get("token")
-    oldPassword = request.headers.get("oldpassword")
-    newPassword = request.headers.get("newpassword")
-    email = database_helper.query_db("SELECT email from loggedinusers WHERE token=?", [token], one=True)
+    token = request.headers.get("Authorization").split()[1]
+    oldPassword = request.json.get("oldpassword")
+    newPassword = request.json.get("newpassword")
+    email = database_helper.select_user_by_token(token)
 
     if (not email):
         return {"success": False, "message": "You are not logged in."} 
 
-    if (not database_helper.query_db("select * from users WHERE password=? and email=?", [oldPassword, email[0]], one=True)):
+    if (not database_helper.get_specific_user(email[1], oldPassword)):
         return {"success": False, "message": "Wrong password."}
 
-    database_helper.query_db("UPDATE users SET password=? WHERE email=?", [newPassword, email[0]])
+    database_helper.set_password(email[1], newPassword)
     return {"success": True, "message": "Password changed."}
 
 
@@ -106,18 +110,18 @@ def get_user_data_by_token():
     Retrieves the stored data for the user whom the passed token is issued for. The currently
     signed in user can use this method to retrieve all its own information from the server
     """
-    token = request.headers.get("token")
-    email = database_helper.query_db("SELECT email from loggedinusers WHERE token=?", [token], one=True)
+    token = request.headers.get("Authorization").split()[1]
+    email = database_helper.get_email_by_token(token)
 
     if (not email):
         return {"success": False, "message": "You are not signed in."}
 
-    user = database_helper.query_db("SELECT email from users WHERE email=?", [email[0]], one=True)
+    user = database_helper.get_user_by_email(email[0])
 
     if (not user):
         return {"success": False, "message": "No such user."}   
 
-    data = database_helper.query_db("select * from users WHERE email=?", [email[0]], one=True)
+    data = database_helper.select_user_by_email(email[0])
     match = {
         "email": data[0],
         "city": data[1],
@@ -135,18 +139,18 @@ def get_user_data_by_email():
     """
     Retrieves the stored data for the user specified by the passed email address.
     """
-    token = request.headers.get("token")
-    email = request.headers.get("email")
+    token = request.headers.get("Authorization").split()[1]
+    email = request.json.get("email")
 
-    if (not database_helper.query_db("SELECT * from loggedinusers WHERE token=?", [token], one=True)):
+    if (not database_helper.select_user_by_token(token)):
         return {"success": False, "message": "You are not signed in."}
 
-    user = database_helper.query_db("SELECT * from users WHERE email=?", [email], one=True)
+    user = database_helper.select_user_by_email(email)
     print(user)
     if (not user):
         return {"success": False, "message": "No such user."}   
 
-    data = database_helper.query_db("select * from users WHERE email=?", [email], one=True)
+    data = database_helper.select_user_by_email(email)
     match = {
         "email": data[0],
         "city": data[1],
@@ -163,17 +167,17 @@ def post_message():
     """
     Tries to post a message to the wall of the user specified by the email address.
     """
-    token = request.headers.get("token")
-    message = request.headers.get("message")
-    email = request.headers.get("email")
+    token = request.headers.get("Authorization").split()[1]
+    message = request.json.get("message")
+    email = request.json.get("email")
     
-    if (not database_helper.query_db("SELECT * from users WHERE email=?", [email], one=True)):
+    if (not database_helper.select_user_by_email(email)):
         return {"success": False, "message": "No such user."}
 
-    if (not database_helper.query_db("SELECT * from loggedinusers WHERE token=?", [token], one=True)):
+    if (not database_helper.select_user_by_token(token)):
         return {"success": False, "message": "You are not signed in."}
 
-    database_helper.query_db("INSERT INTO messages(writer, content) VALUES(?, ?)", [email, message])
+    database_helper.create_message(email, message)
     return {"success": True, "message": "Message posted"}
 
 
@@ -183,16 +187,16 @@ def get_user_messages_by_token():
     Retrieves the stored messages for the user whom the passed token is issued for. The
     currently signed in user can use this method to retrieve all its own messages from the server
     """
-    token = request.headers.get("token")
-    email = database_helper.query_db("SELECT email from loggedinusers WHERE token=?", [token], one=True)
+    token = request.headers.get("Authorization").split()[1]
+    email = database_helper.get_email_by_token(token)
 
     if (not email):
         return {"success": False, "message": "You are not signed in."}
 
-    if (not database_helper.query_db("SELECT * from users WHERE email=?", [email[0]], one=True)):
+    if (not database_helper.get_user_by_email(email[0])):
         return {"success": False, "message": "No such user."}
     
-    data = database_helper.query_db("select * from messages WHERE writer=?", [email[0]])
+    data = database_helper.get_messages_by_email(email[0])
 
     match = []
     for message in data:
@@ -208,16 +212,16 @@ def get_user_messages_by_email():
     """
     Retrieves the stored messages for the user specified by the passed email address.
     """
-    token = request.headers.get("token")
-    email = request.headers.get("email")
+    token = request.headers.get("Authorization").split()[1]
+    email = request.json.get("email")
 
-    if (not database_helper.query_db("SELECT * from loggedinusers WHERE token=?", [token], one=True)):
+    if (not database_helper.select_user_by_token(token)):
         return {"success": False, "message": "You are not signed in."}
     
-    if (not database_helper.query_db("SELECT * from users WHERE email=?", [email], one=True)):
+    if (not database_helper.select_user_by_email(email)):
         return {"success": False, "message": "No such user."}
 
-    data = database_helper.query_db("select * from messages WHERE writer=?", [email])
+    data = database_helper.get_messages_by_email(email)
 
     match = []
     for message in data:
