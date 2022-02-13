@@ -84,7 +84,7 @@ def sign_out():
     return {"success": True, "message": "Successfully signed out."}
 
 
-@app.route("/change_password", methods=["POST"])
+@app.route("/change_password", methods=["PUT"])
 def change_password():
     """
     Changes the password of the current user to a new one.
@@ -104,9 +104,9 @@ def change_password():
     return {"success": True, "message": "Password changed."}
 
 
-@app.route("/get_user_data_by_token", methods=["POST"])
+@app.route("/get_user_data_by_token", methods=["GET"])
 def get_user_data_by_token():
-    """
+    """ 
     Retrieves the stored data for the user whom the passed token is issued for. The currently
     signed in user can use this method to retrieve all its own information from the server
     """
@@ -134,13 +134,13 @@ def get_user_data_by_token():
     return {"success": True, "message": "User data retrieved.", "data": match};
 
 
-@app.route("/get_user_data_by_email", methods=["POST"])
+@app.route("/get_user_data_by_email", methods=["GET"])
 def get_user_data_by_email():
     """
     Retrieves the stored data for the user specified by the passed email address.
     """
     token = request.headers.get("Authorization").split()[1]
-    email = request.json.get("email")
+    email = request.args.get('email')
 
     if (not database_helper.select_user_by_token(token)):
         return {"success": False, "message": "You are not signed in."}
@@ -181,7 +181,7 @@ def post_message():
     return {"success": True, "message": "Message posted"}
 
 
-@app.route("/get_user_messages_by_token", methods=["POST"])
+@app.route("/get_user_messages_by_token", methods=["GET"])
 def get_user_messages_by_token():
     """
     Retrieves the stored messages for the user whom the passed token is issued for. The
@@ -207,13 +207,14 @@ def get_user_messages_by_token():
     return {"success": True, "message": "User messages retrieved.", "data": match};
 
 
-@app.route("/get_user_messages_by_email", methods=["POST"])
+@app.route("/get_user_messages_by_email", methods=["GET"])
 def get_user_messages_by_email():
     """
     Retrieves the stored messages for the user specified by the passed email address.
     """
     token = request.headers.get("Authorization").split()[1]
-    email = request.json.get("email")
+    email = request.args.get('email')
+
 
     if (not database_helper.select_user_by_token(token)):
         return {"success": False, "message": "You are not signed in."}
