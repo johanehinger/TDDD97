@@ -160,7 +160,7 @@ function getPosts() {
 
   for (i = 0; i < posts.length; ++i) {
     list_item = document.createElement("li");
-    list_item.innerHTML = posts[i].content;
+    list_item.innerHTML = posts[i].content + " - " + posts[i].writer;
 
     list_element.appendChild(list_item);
   }
@@ -184,7 +184,7 @@ function getOtherUserPosts() {
 
   for (i = 0; i < posts.length; ++i) {
     list_item = document.createElement("li");
-    list_item.innerHTML = posts[i].content;
+    list_item.innerHTML = posts[i].content + " - " + posts[i].writer;
 
     list_element.appendChild(list_item);
   }
