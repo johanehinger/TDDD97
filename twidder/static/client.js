@@ -17,6 +17,8 @@ window.onload = function () {
 };
 
 function signIn() {
+  console.log("hej hej");
+  // return false;
   password = document.getElementById("password").value;
   email = document.getElementById("username").value;
   token = sessionStorage.getItem("token");
@@ -26,9 +28,11 @@ function signIn() {
       "Password must be longer than 5 characters!";
     return false;
   }
+  console.log("connect");
   socket = io();
-
+  console.log(socket);
   socket.on("connect", function () {
+    console.log("Connect agai");
     socket.emit("login", email, password);
   });
 
@@ -56,11 +60,6 @@ function signUp() {
   password = document.getElementById("password-sign-up").value;
   email = document.getElementById("username-sign-up").value;
   repeat_password = document.getElementById("repeat-password-sign-up").value;
-  firstname = document.getElementById("first-name").value;
-  familyname = document.getElementById("last-name").value;
-  gender = document.getElementById("gender-select").value;
-  city = document.getElementById("city").value;
-  country = document.getElementById("country").value;
 
   if (password.length < 5 || repeat_password.length < 5) {
     document.getElementById("sign-up-error").innerHTML =
@@ -72,15 +71,18 @@ function signUp() {
       "Passwords must match!";
     return false;
   }
+  userData = {
+    email: email,
+    password: password,
+    firstname: document.getElementById("first-name").value,
+    familyname: document.getElementById("last-name").value,
+    gender: document.getElementById("gender-select").value,
+    city: document.getElementById("city").value,
+    country: document.getElementById("country").value,
+  };
   const xhttp = new XMLHttpRequest();
   xhttp.open("POST", "/sign_up", true);
-  xhttp.setRequestHeader("email", email);
-  xhttp.setRequestHeader("password", password);
-  xhttp.setRequestHeader("firstname", firstname);
-  xhttp.setRequestHeader("familyname", familyname);
-  xhttp.setRequestHeader("gender", gender);
-  xhttp.setRequestHeader("city", city);
-  xhttp.setRequestHeader("country", country);
+  xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -116,7 +118,7 @@ function signUp() {
       });
     }
   };
-  xhttp.send();
+  xhttp.send(JSON.stringify(userData));
 }
 
 function navigate(evt, tab) {
@@ -151,10 +153,9 @@ function changePassword() {
   token = sessionStorage.getItem("token");
 
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/change_password", true);
-  xhttp.setRequestHeader("token", token);
-  xhttp.setRequestHeader("oldpassword", old_password);
-  xhttp.setRequestHeader("newpassword", new_password);
+  xhttp.open("PUT", "/change_password", true);
+  xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xhttp.setRequestHeader("Authorization", "Bearer " + token);
 
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -164,14 +165,17 @@ function changePassword() {
       return;
     }
   };
-  xhttp.send();
+  // xhttp.send();
+  xhttp.send(
+    JSON.stringify({ oldpassword: old_password, newpassword: new_password })
+  );
 }
 
 function signOut() {
   token = sessionStorage.getItem("token");
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/sign_out", true);
-  xhttp.setRequestHeader("token", token);
+  xhttp.open("DELETE", "/sign_out", true);
+  xhttp.setRequestHeader("Authorization", "Bearer " + token);
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       response = JSON.parse(xhttp.responseText);
@@ -187,8 +191,8 @@ function signOut() {
 function getUserInfo() {
   token = sessionStorage.getItem("token");
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/get_user_data_by_token", true);
-  xhttp.setRequestHeader("token", token);
+  xhttp.open("GET", "/get_user_data_by_token", true);
+  xhttp.setRequestHeader("Authorization", "Bearer " + token);
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       response = JSON.parse(xhttp.responseText);
@@ -212,9 +216,13 @@ function getUserInfo() {
 function post() {
   token = sessionStorage.getItem("token");
   message = document.getElementById("new-post-text").value;
+  console.log(message);
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/get_user_data_by_token", true);
-  xhttp.setRequestHeader("token", token);
+  xhttp.open("GET", "/get_user_data_by_token", true);
+  xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+  // xhttp.setRequestHeader("token", token);
+  xhttp.setRequestHeader("Authorization", "Bearer " + token);
 
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -222,9 +230,11 @@ function post() {
       email = response.data.email;
       const xhttp = new XMLHttpRequest();
       xhttp.open("POST", "/post_message", true);
-      xhttp.setRequestHeader("token", token);
-      xhttp.setRequestHeader("message", message);
-      xhttp.setRequestHeader("email", email);
+      xhttp.setRequestHeader("Authorization", "Bearer " + token);
+      xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+      // xhttp.setRequestHeader("message", message);
+      // xhttp.setRequestHeader("email", email);
 
       xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
@@ -233,7 +243,7 @@ function post() {
           document.getElementById("new-post-text").value = "";
         }
       };
-      xhttp.send();
+      xhttp.send(JSON.stringify({ message: message, email: email }));
     }
   };
   xhttp.send();
@@ -244,8 +254,8 @@ function getPosts() {
   token = sessionStorage.getItem("token");
 
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/get_user_messages_by_token", true);
-  xhttp.setRequestHeader("token", token);
+  xhttp.open("GET", "/get_user_messages_by_token", true);
+  xhttp.setRequestHeader("Authorization", "Bearer " + token);
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       response = JSON.parse(xhttp.responseText);
@@ -259,7 +269,7 @@ function getPosts() {
 
       for (i = 0; i < posts.length; ++i) {
         list_item = document.createElement("li");
-        list_item.innerHTML = posts[i].content;
+        list_item.innerHTML = posts[i].content + " - " + posts[i].writer;
 
         list_element.appendChild(list_item);
       }
@@ -274,9 +284,8 @@ function getOtherUserPosts() {
   token = sessionStorage.getItem("token");
   email = document.getElementById("search-username").value;
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/get_user_messages_by_email", true);
-  xhttp.setRequestHeader("token", token);
-  xhttp.setRequestHeader("email", email);
+  xhttp.open("GET", "/get_user_messages_by_email?email=" + email, true);
+  xhttp.setRequestHeader("Authorization", "Bearer " + token);
 
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -334,9 +343,9 @@ function getOtherUserInfo() {
     return;
   }
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/get_user_data_by_email", true);
-  xhttp.setRequestHeader("token", token);
-  xhttp.setRequestHeader("email", email);
+  xhttp.open("GET", "/get_user_data_by_email?email=" + email, true);
+  xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xhttp.setRequestHeader("Authorization", "Bearer " + token);
 
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
