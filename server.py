@@ -19,7 +19,8 @@ def generateToken():
     return token
     
 
-@app.route("/")
+# @app.route("/")
+@app.route("/", methods=["GET"])
 def hello_world():
     return app.send_static_file('client.html')
 
