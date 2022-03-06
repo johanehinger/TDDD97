@@ -4,6 +4,7 @@ import database_helper
 import math
 import random
 from flask_socketio import SocketIO, emit
+import os
 
 app = Flask(__name__, static_url_path='')
 app.config['SECRET_KEY'] = 'secret!'
@@ -277,5 +278,6 @@ if __name__ == '__main__':
     # http_server = WSGIServer(('127.0.0.1',5000), app, handler_class=WebSocketHandler)
     # http_server.serve_forever()
     # serve(app, host="127.0.0.1", port=5000)
-    socketio.run(app)
-    # app.run()
+    # socketio.run(app)
+    port = os.environ.get('PORT', 5000)
+    app.run(debug=False, host="0.0.0.0", port=port)
