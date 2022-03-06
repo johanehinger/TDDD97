@@ -19,8 +19,7 @@ def generateToken():
     return token
     
 
-# @app.route("/")
-@app.route("/", methods=["GET"])
+@app.route("/")
 def hello_world():
     return app.send_static_file('client.html')
 
@@ -278,4 +277,5 @@ if __name__ == '__main__':
     # http_server = WSGIServer(('127.0.0.1',5000), app, handler_class=WebSocketHandler)
     # http_server.serve_forever()
     # serve(app, host="127.0.0.1", port=5000)
-    socketio.run(app)
+    # socketio.run(app)
+    app.run()
