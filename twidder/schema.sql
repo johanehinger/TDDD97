@@ -23,8 +23,10 @@ create table if not EXISTS users(
 );
 
 CREATE TABLE if not EXISTS messages(
+    reciever VARCHAR(50),
     writer VARCHAR(50),
     content VARCHAR(300),
-    CONSTRAINT FK_writer FOREIGN KEY (writer) 
+    location VARCHAR(50),
+    CONSTRAINT FK_reciever FOREIGN KEY (reciever) 
     REFERENCES users(email)
 );

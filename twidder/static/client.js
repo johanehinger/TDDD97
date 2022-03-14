@@ -1,59 +1,85 @@
 displayview = function () {
   token = sessionStorage.getItem("token");
-
   if (token) {
     document.getElementById("view").innerHTML =
       document.getElementById("profile-view").innerHTML;
     getUserInfo();
     getPosts();
+    socket = io();
+    socket.on("connect", function () {
+      socket.emit("valid_check", token);
+      socket.on(token, (response) => {
+        sessionStorage.clear();
+        displayview();
+      });
+    });
     return;
   }
   document.getElementById("view").innerHTML =
     document.getElementById("welcome-view").innerHTML;
 };
 
+function forgotPassword() {
+  email = document.getElementById("username").value;
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("GET", "/forgot_password?email=" + email, true);
+
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      console.log(response);
+    }
+  };
+  xhttp.send();
+}
+
+let crd;
+
+function success(pos) {
+  crd = pos.coords;
+  console.log("Your current position is:");
+  console.log(`Latitude : ${crd.latitude}`);
+  console.log(`Longitude: ${crd.longitude}`);
+  console.log(`More or less ${crd.accuracy} meters.`);
+}
+
+function error(err) {
+  console.warn(`ERROR(${err.code}): ${err.message}`);
+}
+
+navigator.geolocation.getCurrentPosition(success, error);
+
 window.onload = function () {
   displayview();
 };
 
 function signIn() {
-  console.log("hej hej");
-  // return false;
   password = document.getElementById("password").value;
   email = document.getElementById("username").value;
-  token = sessionStorage.getItem("token");
 
   if (password.length < 5) {
     document.getElementById("login-error").innerHTML =
       "Password must be longer than 5 characters!";
     return false;
   }
-  console.log("connect");
-  socket = io();
-  console.log(socket);
-  socket.on("connect", function () {
-    console.log("Connect agai");
-    socket.emit("login", email, password);
-  });
 
-  socket.on(email, (response) => {
-    if (!response.success) {
-      document.getElementById("login-error").innerHTML = response.message;
-      return false;
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "/sign_in", true);
+  xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      response = JSON.parse(xhttp.responseText);
+      if (!response.success) {
+        document.getElementById("login-error").innerHTML = response.message;
+        return false;
+      }
+      sessionStorage.setItem("token", response.data);
+      displayview();
     }
-    console.log("email: " + email);
-    console.log("email response: " + response.email);
+  };
 
-    if (token && token != response.data) {
-      console.log("Token updated");
-      signOut();
-      return;
-    }
-
-    sessionStorage.setItem("token", response.data);
-    displayview();
-    console.log(response);
-  });
+  xhttp.send(JSON.stringify({ email: email, password: password }));
 }
 
 function signUp() {
@@ -92,30 +118,23 @@ function signUp() {
         return false;
       }
 
-      socket = io();
+      const xhttp = new XMLHttpRequest();
+      xhttp.open("POST", "/sign_in", true);
+      xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
-      socket.on("connect", function () {
-        socket.emit("login", email, password);
-      });
-
-      socket.on(email, (response) => {
-        if (!response.success) {
-          document.getElementById("login-error").innerHTML = response.message;
-          return false;
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          response = JSON.parse(xhttp.responseText);
+          if (!response.success) {
+            document.getElementById("login-error").innerHTML = response.message;
+            return false;
+          }
+          sessionStorage.setItem("token", response.data);
+          displayview();
         }
-        console.log("email: " + email);
-        console.log("email response: " + response.email);
+      };
 
-        if (token && token != response.data) {
-          console.log("Token updated");
-          signOut();
-          return;
-        }
-
-        sessionStorage.setItem("token", response.data);
-        displayview();
-        console.log(response);
-      });
+      xhttp.send(JSON.stringify({ email: email, password: password }));
     }
   };
   xhttp.send(JSON.stringify(userData));
@@ -243,7 +262,17 @@ function post() {
           document.getElementById("new-post-text").value = "";
         }
       };
-      xhttp.send(JSON.stringify({ message: message, email: email }));
+      xhttp.send(
+        JSON.stringify({
+          message: message,
+          writer: email,
+          reciever: email,
+          crd:
+            crd !== undefined
+              ? { latitude: crd.latitude, longitude: crd.longitude }
+              : null,
+        })
+      );
     }
   };
   xhttp.send();
@@ -269,7 +298,12 @@ function getPosts() {
 
       for (i = 0; i < posts.length; ++i) {
         list_item = document.createElement("li");
-        list_item.innerHTML = posts[i].content + " - " + posts[i].writer;
+        list_item.innerHTML =
+          posts[i].content +
+          " - " +
+          posts[i].writer +
+          " - " +
+          posts[i].location;
 
         list_element.appendChild(list_item);
       }
@@ -302,7 +336,12 @@ function getOtherUserPosts() {
 
       for (i = 0; i < posts.length; ++i) {
         list_item = document.createElement("li");
-        list_item.innerHTML = posts[i].content;
+        list_item.innerHTML =
+          posts[i].content +
+          " - " +
+          posts[i].writer +
+          " - " +
+          posts[i].location;
 
         list_element.appendChild(list_item);
       }
@@ -315,21 +354,42 @@ function postOnOtherUser() {
   token = sessionStorage.getItem("token");
   content = document.getElementById("search-new-post-text").value;
   to_email = document.getElementById("search-username").value;
-  if (!to_email || !content) {
+  if (!content) {
     return;
   }
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", "/post_message", true);
-  xhttp.setRequestHeader("token", token);
-  xhttp.setRequestHeader("message", content);
-  xhttp.setRequestHeader("email", to_email);
-
+  xhttp.open("GET", "/get_user_data_by_token", true);
+  xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xhttp.setRequestHeader("Authorization", "Bearer " + token);
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
-      response = JSON.parse(xhttp.responseText);
-      console.log(response);
-      getOtherUserPosts();
-      document.getElementById("search-new-post-text").value = "";
+      response = JSON.parse(this.responseText);
+      email = response.data.email;
+      const xhttp = new XMLHttpRequest();
+      xhttp.open("POST", "/post_message", true);
+      xhttp.setRequestHeader("Authorization", "Bearer " + token);
+      xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          response = JSON.parse(xhttp.responseText);
+          console.log(response);
+          getOtherUserPosts();
+          document.getElementById("search-new-post-text").value = "";
+        }
+      };
+      // xhttp.send();
+      xhttp.send(
+        JSON.stringify({
+          message: content,
+          writer: email,
+          reciever: to_email,
+          crd:
+            crd !== undefined
+              ? { latitude: crd.latitude, longitude: crd.longitude }
+              : null,
+        })
+      );
     }
   };
   xhttp.send();

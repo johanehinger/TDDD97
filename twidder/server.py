@@ -4,6 +4,11 @@ import database_helper
 import math
 import random
 from flask_socketio import SocketIO, emit
+import requests
+import smtplib
+from email.message import EmailMessage
+import random
+import string
 
 app = Flask(__name__, static_url_path='')
 app.config['SECRET_KEY'] = 'secret!'
@@ -17,8 +22,6 @@ def generateToken():
     for i in range(0, 36):
         token += letters[math.floor(random.random() * len(letters))]
     return token
-    
-
 @app.route("/")
 def hello_world():
     return app.send_static_file('client.html')
@@ -30,6 +33,32 @@ def hello_world():
 def init_database():
     print("Init DB")
     database_helper.init_db(app)
+
+
+@app.route("/sign_in", methods=['POST'])
+def sign_in():
+    """
+    Authenticates the username by the provided password.
+    """
+    email = request.json.get("email")
+    password = request.json.get("password")
+
+    # Assert that the user does exist and that the password is correct!
+    if (not database_helper.get_specific_user(email, password)):
+        return {"success": False, "message": "Wrong username or password."};
+
+    token = generateToken()
+    database_helper.add_user(token, email)
+    sessions[email] = token
+    print(str(sessions))
+
+    return {"success": True, "message": "Successfully signed in.", "data": token }
+
+@socketio.on('valid_check')
+def valid_check(token):
+    print('token', token)
+    if not (token in sessions.values()):
+        emit(token, {"success": False, "message": "Token invalid"})
 
 
 @socketio.on('login')
@@ -101,11 +130,42 @@ def sign_out():
     if (not database_helper.select_user_by_token(token)):
         return {"success": False, "message": "You are not signed in."}
     
+    email = database_helper.get_email_by_token(token)
     database_helper.remove_user(token)
     
-    del sessions[token]
+    del sessions[email[0]]
     print("Sessions now updated: ", str(sessions))
     return {"success": True, "message": "Successfully signed out."}
+
+# To test this function for yourself you need a ethereal account
+# It is very simple, simply follow this link: https://ethereal.email/
+# click create account.
+# paste your own credentials in this function and it should work.
+# If you run into any problems, please ping on joheh148@student.liu.se
+@app.route("/forgot_password", methods=["GET"])
+def forgotPassword():
+    email = request.args.get('email')
+    if (not email):
+        return {"success": False, "message": "Provide reset email."}
+
+    letters = string.ascii_lowercase
+    new_password = ''.join(random.choice(letters) for i in range(10))
+
+    s = smtplib.SMTP(host="smtp.ethereal.email", port=587)
+    s.starttls()
+    # Replace this with your own credentials.
+    s.login('marilie.cremin41@ethereal.email', 'E54PPFQqMDmDmZSv38')
+
+    msg = EmailMessage()
+    msg.set_content("Forgot password? Here is your new password: " + new_password)
+    msg['Subject'] = "Password reset"
+    msg['From'] = 'twidder@spam.tddd97'
+    msg['To'] = email
+
+    s.send_message(msg)
+    s.quit()
+    database_helper.set_password(email, new_password)
+    return {"success": True, "message": "Mail sent to:" + email}
 
 
 @app.route("/change_password", methods=["PUT"])
@@ -194,15 +254,27 @@ def post_message():
     print(request.json)
     token = request.headers.get("Authorization").split()[1]
     message = request.json.get("message")
-    email = request.json.get("email")
+    writer = request.json.get("writer")
+    reciever = request.json.get("reciever")
+
+    crd = request.json.get('crd')
+
     
-    if (not database_helper.select_user_by_email(email)):
+    if (not database_helper.select_user_by_email(writer)):
         return {"success": False, "message": "No such user."}
 
     if (not database_helper.select_user_by_token(token)):
         return {"success": False, "message": "You are not signed in."}
+    
+    if (crd):
+        resp = requests.get("https://geocode.xyz/" + str(crd['latitude']) + "," + str(crd['longitude']) + "?json=1&auth=137501134970284e15974203x5027")
+        json = resp.json()
+        print(json['city'])
+        database_helper.create_message(reciever, writer, message, location=json['city'])
+        return {"success": True, "message": "Message posted"}
 
-    database_helper.create_message(email, message)
+
+    database_helper.create_message(reciever, writer, message)
     return {"success": True, "message": "Message posted"}
 
 
@@ -226,8 +298,9 @@ def get_user_messages_by_token():
     match = []
     for message in data:
         match.append({
-        "writer": message[0],
-        "content": message[1],
+        "writer": message[1],
+        "content": message[2],
+        "location": message[3]
     })
     return {"success": True, "message": "User messages retrieved.", "data": match};
 
@@ -251,8 +324,9 @@ def get_user_messages_by_email():
     match = []
     for message in data:
         match.append({
-        "writer": message[0],
-        "content": message[1],
+        "writer": message[1],
+        "content": message[2],
+        "location": message[3]
     })
     return {"success": True, "message": "User messages retrieved.", "data": match};
 

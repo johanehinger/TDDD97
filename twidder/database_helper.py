@@ -79,8 +79,8 @@ def get_user_by_email(email):
     return query_db("SELECT email from users WHERE email=?", [email], one=True)
 
 
-def create_message(email, message):
-    query_db("INSERT INTO messages(writer, content) VALUES(?, ?)", [email, message])
+def create_message(reciever, writer, message, location='Unknown'):
+    query_db("INSERT INTO messages(reciever, writer, content, location) VALUES(?, ?, ?, ?)", [reciever, writer, message, location])
 
 def get_messages_by_email(email):
-    return query_db("select * from messages WHERE writer=?", [email])
+    return query_db("select * from messages WHERE reciever=?", [email])
