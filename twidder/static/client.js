@@ -8,7 +8,7 @@ displayview = function () {
     socket = io();
     socket.on("connect", function () {
       socket.emit("valid_check", token);
-      socket.on(token, (response) => {
+      socket.on("not_valid", (response) => {
         sessionStorage.clear();
         displayview();
       });

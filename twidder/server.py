@@ -49,49 +49,19 @@ def sign_in():
 
     token = generateToken()
     database_helper.add_user(token, email)
-    sessions[email] = token
-    print(str(sessions))
 
     return {"success": True, "message": "Successfully signed in.", "data": token }
 
+
+
 @socketio.on('valid_check')
 def valid_check(token):
-    print('token', token)
-    if not (token in sessions.values()):
-        emit(token, {"success": False, "message": "Token invalid"})
-
-
-@socketio.on('login')
-def login(email, password):
-
-    token = generateToken()
-
-    if not (email in sessions.values()):
-
-        if (not database_helper.get_specific_user(email, password)):
-            emit(email,{"success": False, "message": "Wrong username or password."})
-            return
-        
-        database_helper.add_user(token, email)
-
-        sessions[token] = email
-        print(email, " now exists in dict with: ", token)
-        print(str(sessions))
-        emit(email, {"success": True, "message": "Successfully signed in.", "data": token })
-
-    else:
-        print('In else')
-        if (not database_helper.get_specific_user(email, password)):
-            emit(email,{"success": False, "message": "Wrong username or password."})
-            return
-
-        database_helper.add_user(token, email)
-
-        sessions[token] = email
-        print(email, " now exists in dict with: ", token)
-        print(str(sessions))
-        emit(email, {"success": True, "message": "Successfully signed in.", "data": token}, broadcast=True)
-
+    email = database_helper.get_email_by_token(token)
+    if email[0] in sessions:
+        emit('not_valid', {"success": False, "message": "Token invalid"}, room=sessions[email[0]])
+    
+    sessions[email[0]] = request.sid
+    print(str(sessions))
 
 
 @app.route("/sign_up", methods=["POST"])
