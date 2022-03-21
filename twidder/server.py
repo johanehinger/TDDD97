@@ -46,6 +46,9 @@ def sign_in():
     # Assert that the user does exist and that the password is correct!
     if (not database_helper.get_specific_user(email, password)):
         return {"success": False, "message": "Wrong username or password."};
+    
+    if email in sessions:
+        emit('not_valid', {"success": False, "message": "Token invalid"}, namespace='/', room=sessions[email])
 
     token = generateToken()
     database_helper.add_user(token, email)
@@ -57,8 +60,6 @@ def sign_in():
 @socketio.on('valid_check')
 def valid_check(token):
     email = database_helper.get_email_by_token(token)
-    if email[0] in sessions:
-        emit('not_valid', {"success": False, "message": "Token invalid"}, room=sessions[email[0]])
     
     sessions[email[0]] = request.sid
     print(str(sessions))
